@@ -6,12 +6,16 @@ interface ChatState {
   isStreaming: boolean
   unreadCount: number
   isOpen: boolean
+  welcomeVisible: boolean
+  greetingLoading: boolean
   lastSuggestions: Suggestion[]
   addMessage: (msg: Message) => void
   appendChunk: (chunk: string) => void
   setStreaming: (v: boolean) => void
   clearUnread: () => void
   setOpen: (v: boolean) => void
+  setWelcomeVisible: (v: boolean) => void
+  setGreetingLoading: (v: boolean) => void
   setLastSuggestions: (suggestions: Suggestion[]) => void
   updateLastAssistantMessage: (updates: Partial<Message>) => void
 }
@@ -21,6 +25,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
   isStreaming: false,
   unreadCount: 0,
   isOpen: false,
+  welcomeVisible: true,
+  greetingLoading: true,
   lastSuggestions: [],
   addMessage: (msg) =>
     set((state) => ({
@@ -41,6 +47,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
   setStreaming: (isStreaming) => set({ isStreaming }),
   clearUnread: () => set({ unreadCount: 0 }),
   setOpen: (isOpen) => set({ isOpen, unreadCount: isOpen ? 0 : get().unreadCount }),
+  setWelcomeVisible: (welcomeVisible) => set({ welcomeVisible }),
+  setGreetingLoading: (greetingLoading) => set({ greetingLoading }),
   setLastSuggestions: (lastSuggestions) => set({ lastSuggestions }),
   updateLastAssistantMessage: (updates) =>
     set((state) => {
