@@ -7,8 +7,9 @@
     "start": "ts-node src/server.ts",
     "build": "tsc",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev",
-    "seed": "ts-node prisma/seed.ts"
+    "prisma:migrate": "node scripts/with-db-url.js npx prisma migrate deploy",
+    "prisma:migrate:dev": "node scripts/with-db-url.js npx prisma migrate dev",
+    "seed": "node scripts/with-db-url.js npx ts-node prisma/seed.ts"
   },
   "dependencies": {
     "@langchain/core": "^0.3.42",
@@ -29,7 +30,7 @@
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/node": "^22.13.10",
-    "prisma": "^6.5.0",
+    "prisma": "^6.19.3",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.8.2"

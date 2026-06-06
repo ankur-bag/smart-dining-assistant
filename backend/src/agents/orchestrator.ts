@@ -54,6 +54,39 @@ Return only the intent word. Nothing else.`
   return valid.includes(text as Intent) ? (text as Intent) : 'FALLBACK'
 }
 
+const MOOD_PREFERENCES: Record<string, Record<string, boolean>> = {
+  spicy: { spicy: true },
+  light: { light: true },
+  sweet: { sweet: true },
+  filling: { filling: true },
+  'surprise me': { surprise: true },
+  'surprise me!': { surprise: true },
+}
+
+function applyMoodPreferences(
+  normalised: Awaited<ReturnType<typeof multilingualAgent>>,
+  userMessage: string
+) {
+  const lower = userMessage.toLowerCase().trim()
+  for (const [key, prefs] of Object.entries(MOOD_PREFERENCES)) {
+    if (lower === key || lower.includes(key)) {
+      normalised.preferences = { ...normalised.preferences, ...prefs }
+      if (normalised.intent === 'GREET' || normalised.intent === 'FALLBACK') {
+        normalised.intent = 'RECOMMEND'
+      }
+      break
+    }
+  }
+  if (lower === "tell me what's good" || lower === 'tell me whats good') {
+    normalised.intent = 'RECOMMEND'
+    normalised.preferences = { ...normalised.preferences, popular: true }
+  }
+  if (lower === 'just browsing') {
+    normalised.intent = 'RECOMMEND'
+    normalised.preferences = { ...normalised.preferences, browsing: true }
+  }
+}
+
 export async function orchestrate(
   sessionId: string,
   tableId: string,
@@ -63,16 +96,25 @@ export async function orchestrate(
     throw new Error('AI service temporarily unavailable')
   }
 
-  const normalised = await multilingualAgent(userMessage)
   const context = await getSessionContext(sessionId)
 
+  if (userMessage === '__INIT__') {
+    const greet = await greeterAgent(sessionId, context)
+    return {
+      type: 'greet',
+      message: greet.message,
+      quickOptions: greet.quickOptions,
+      preferenceChips: greet.preferenceChips,
+    }
+  }
+
+  const normalised = await multilingualAgent(userMessage)
+  applyMoodPreferences(normalised, userMessage)
+
   const validIntents: Intent[] = ['GREET', 'RECOMMEND', 'ADD_ITEM', 'CHECKOUT', 'FALLBACK']
-  let intent: Intent =
-    userMessage === '__INIT__' || context.messageCount === 0
-      ? 'GREET'
-      : validIntents.includes(normalised.intent as Intent)
-        ? (normalised.intent as Intent)
-        : await classifyIntent(normalised)
+  let intent: Intent = validIntents.includes(normalised.intent as Intent)
+    ? (normalised.intent as Intent)
+    : await classifyIntent(normalised)
 
   if (intent === 'FALLBACK') intent = 'RECOMMEND'
 
